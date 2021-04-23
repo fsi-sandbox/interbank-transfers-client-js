@@ -1,0 +1,27 @@
+{
+  "name": "interbank-transfers-client-js",
+  "version": "1.0.0",
+  "description": "A codelab to build an inter-bank funds transfer application using Sterling bank APIs in the FSI Sandbox",
+  "main": "index.js",
+  "scripts": {
+    "dev": "lite-server --baseDir='src'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fsi-sandbox/interbank-transfers-client-js.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fsi-sandbox/interbank-transfers-client-js/issues"
+  },
+  "homepage": "https://github.com/fsi-sandbox/interbank-transfers-client-js#readme",
+  "devDependencies": {
+    "eslint": "^7.24.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "lite-server": "^2.6.1",
+    "prettier": "^2.2.1"
+  }
+}

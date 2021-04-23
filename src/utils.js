@@ -30,9 +30,9 @@ const getFromLocalStorage = async (key) => {
 };
 
 const putIntoLocalStorage = async (opts) => {
-  const { key, value, force = false } = opts;
+  const { key, value, overwrite = false } = opts;
 
-  if (force === true) {
+  if (overwrite === true) {
     localStorage.setItem(key, JSON.stringify(value));
     return;
   }

@@ -1,7 +1,12 @@
 /* eslint-disable no-restricted-globals */
 /* eslint-disable no-alert */
 /* eslint-disable import/extensions */
-import { setupNotifications, storage, getBankList, notify } from './utils.js';
+
+import {
+  setupNotifications, storage, getBankList, notify, bindInputToDataList
+} from './utils.js';
+
+let banksList = [];
 
 const extractValuePairs = (parent, selector) => [...parent.querySelectorAll(`${selector}`)].map((field) => field.value);
 
@@ -64,6 +69,25 @@ const saveTransaction = async (args) => {
   });
 };
 
+const transferDetailsAreValid = (opts) => {
+  let status = true;
+  const {
+    fromAccount, toAccount, fromBank, toBank
+  } = opts;
+
+  if (fromAccount === toAccount) {
+    status = false;
+    notify('You are attempting to transfer funds between the same account. This is not supported!');
+  }
+
+  if (!banksList.find((b) => b.name === fromBank) || !banksList.find((b) => b.name === toBank)) { 
+    status = false;
+    notify('Pls select from the available list of banks');
+  }
+
+  return status;
+};
+
 const attemptTransfer = async (event) => {
   event.preventDefault();
   const form = event.target;
@@ -73,10 +97,9 @@ const attemptTransfer = async (event) => {
   const [fromBank, toBank] = extractValuePairs(form, '[data-bankinput]');
   const [fromAccount, toAccount] = extractValuePairs(form, '[data-nubaninput]');
 
-  if (fromAccount === toAccount) {
-    notify('You are attempting to transfer funds between the same account. This is not supported!');
-    return;
-  }
+  if (!transferDetailsAreValid({
+    fromAccount, toAccount, fromBank, toBank
+  })) return;
 
   const transactionReview = `
     You are about to initiate a transfer of NGN ${amount}
@@ -109,29 +132,23 @@ const attemptTransfer = async (event) => {
 };
 
 const startApp = async () => {
-  getBankList().then((banks) => {
-    if (banks) {
-      storage.put({
-        key: 'banks',
-        value: banks
-      });
+  const form = document.querySelector('form');
+  form.addEventListener('submit', attemptTransfer);
 
-      const bankDataList = document.querySelector('#banks');
-      const bankInputs = document.querySelectorAll('[data-bankinput]');
-
-      banks.forEach(({ name, code }) => {
-        const opt = document.createElement('option');
-        opt.setAttribute('value', name);
-        opt.setAttribute('data-bankcode', code);
-        bankDataList.appendChild(opt);
-      });
-
-      [...bankInputs].forEach((field) => field.setAttribute('list', 'banks'));
+  await bindInputToDataList({
+    queryKey: 'banks',
+    listSelector: '#banks',
+    entryPoint: getBankList,
+    boundInputsSelector: '[data-bankinput]',
+    listItemTransformer: (item, opt) => {
+      const { name, code } = item;
+      opt.setAttribute('value', name);
+      opt.setAttribute('data-bankcode', code);
+      return opt;
     }
   });
 
-  const form = document.querySelector('form');
-  form.addEventListener('submit', attemptTransfer);
+  banksList = await storage.get('banks');
 
   setupNotifications();
 };

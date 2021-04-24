@@ -30,6 +30,8 @@ const getFromLocalStorage = async (key) => {
 const putIntoLocalStorage = async (opts) => {
   const { key, value, overwrite = false } = opts;
 
+  if (!key) return;
+
   if (overwrite === true) {
     localStorage.setItem(key, JSON.stringify(value));
     return;
@@ -68,4 +70,25 @@ export const getBankList = async () => {
   });
 
   return banks;
+};
+
+export const bindInputToDataList = async (opts = {}) => {
+  const {
+    entryPoint, queryKey, listSelector, boundInputsSelector, listItemTransformer
+  } = opts;
+
+  const data = await (entryPoint() || Promise.resolve());
+  if (!data) return;
+
+  storage.put(queryKey, data);
+
+  const dataList = document.querySelector(listSelector);
+  const boundInputs = document.querySelectorAll(boundInputsSelector);
+
+  data.forEach((item) => {
+    const opt = listItemTransformer(item, document.createElement('option'));
+    dataList.appendChild(opt);
+  });
+
+  [...boundInputs].forEach((field) => field.setAttribute('list', queryKey));
 };

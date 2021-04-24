@@ -33,6 +33,37 @@ const saveTransactingParties = async (parties) => {
   }
 };
 
+const saveTransaction = async (args) => {
+  const {
+    amount, fromAccount, toAccount, tnxTime, currency
+  } = args;
+
+  const tnx = {
+    amount,
+    tnxTime,
+    currency,
+    toAccount,
+    fromAccount
+  };
+
+  const tnxKey = 'transactions';
+  let allTnxs = await storage.get(tnxKey);
+  if (!allTnxs) {
+    allTnxs = [tnx];
+    storage.put({
+      key: tnxKey,
+      value: allTnxs
+    });
+    return;
+  }
+
+  allTnxs.push(tnx);
+  storage.put({
+    key: tnxKey,
+    value: []
+  });
+};
+
 const attemptTransfer = async (event) => {
   event.preventDefault();
   const form = event.target;
@@ -49,7 +80,7 @@ const attemptTransfer = async (event) => {
   `;
 
   if (confirm(transactionReview)) {
-    const { status } = await Promise.resolve({ status: 'Done' });
+    const { status, tnxTime } = await Promise.resolve({ status: 'Done', tnxTime: Date.now() });
     if (status && status === 'Done') {
       const parties = [
         {
@@ -65,6 +96,9 @@ const attemptTransfer = async (event) => {
       ];
 
       saveTransactingParties(parties);
+      saveTransaction({
+        amount, fromAccount, toAccount, tnxTime, currency: 'NGN'
+      });
     }
   }
 };

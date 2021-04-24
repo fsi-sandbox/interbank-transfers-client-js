@@ -7,6 +7,7 @@ import {
   storage,
   getBankList,
   notify,
+  showTnxHistory,
   bindInputToDataList,
   getAccountsList,
   initiateTransfer
@@ -14,7 +15,6 @@ import {
 
 let banksList = [];
 let accountsList = [];
-let transactionsList = [];
 let transferInProgress = false;
 
 const extractValuePairs = (parent, selector) => [...parent.querySelectorAll(`${selector}`)].map((field) => field.value);
@@ -172,7 +172,7 @@ const attemptTransfer = async (event) => {
       ];
 
       accountsList = await saveTransactingParties(parties);
-      transactionsList = await saveTransaction({
+      await saveTransaction({
         amount,
         fromAccount,
         toAccount,
@@ -182,7 +182,7 @@ const attemptTransfer = async (event) => {
       });
     }
 
-    enableUserInput(submitBtn, ...allInputs);
+    enableUserInput([submitBtn, ...allInputs]);
     transferInProgress = false;
   }
 };
@@ -223,6 +223,11 @@ const savedAccountToDatalistOption = (item, option) => {
 const startApp = async () => {
   const form = document.querySelector('form');
   form.addEventListener('submit', attemptTransfer);
+
+  const tnxHistryBtn = document.querySelector('nav button');
+  tnxHistryBtn.addEventListener('click', () => {
+    showTnxHistory();
+  });
 
   await bindInputToDataList({
     queryKey: 'banks',

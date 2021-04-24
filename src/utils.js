@@ -63,6 +63,37 @@ export const storage = {
   put: putIntoLocalStorage
 };
 
+const dateFormat = new Intl.DateTimeFormat('default', {
+  month: 'short',
+  day: '2-digit',
+  year: 'numeric'
+});
+
+const currencyFormat = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' });
+
+export const showTnxHistory = async () => {
+  const dialog = document.querySelector('main dialog');
+
+  const tnxs = await storage.get('transactions');
+  dialog.showModal();
+  requestAnimationFrame(() => {
+    if (tnxs) {
+      const list = document.createElement('ol');
+      tnxs.forEach((t) => {
+        const li = document.createElement('li');
+        li.textContent = `
+          ${currencyFormat.format(t.amount)} : From 
+          ${t.fromAccount} To ${t.toAccount} On ${dateFormat.format(new Date(t.tnxTime))}
+        `;
+        list.appendChild(li);
+      });
+      dialog.querySelector('.empty').remove();
+      dialog.querySelector('section').appendChild(list);
+    }
+    // dialog.classList.add('on-screen');
+  });
+};
+
 const fetchBanks = async () => {
   let banks = await storage.get('banks');
   if (banks) return banks;
@@ -91,10 +122,7 @@ export const getBankList = async () => {
 export const getAccountsList = async () => storage.get('accounts');
 
 export const bindInputToDataList = async (opts = {}) => {
-  const {
-    entryPoint, queryKey, listSelector,
-    boundInputsSelector, listItemTransformer
-  } = opts;
+  const { entryPoint, queryKey, listSelector, boundInputsSelector, listItemTransformer } = opts;
 
   const data = await (entryPoint() || Promise.resolve());
   if (!data) return;

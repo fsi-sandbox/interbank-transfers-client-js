@@ -129,8 +129,82 @@ section [data-parties] {
   margin-top: 1em;
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+main .on-screen {
+  animation: fade-in 0.3s;
+}
+
 @media screen and (min-width: 850px) {
   [data-parties] aside + aside {
     margin-left: 2em;
   }
+}
+
+main dialog {
+  min-width: 300px;
+  max-height: 65vh;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+  animation: fade-in 0.8s;
+  font-family: 'Roboto', sans-serif;
+  box-shadow: 3px 3px 5px 6px #ccc;
+
+  z-index: 10;
+}
+
+main dialog form {
+  display: flex;
+  flex-direction: column;
+}
+
+main dialog::backdrop {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+main dialog [title] {
+  margin: 1.5em;
+  margin-bottom: 0;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #ccc;
+}
+
+dialog [title] button {
+  border: none;
+  outline: none;
+  background: #fff;
+}
+
+main dialog section {
+  box-shadow: none;
+  max-height: 50vh;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+
+dialog section .empty {
+  color: #dadce0;
+  font: 100px/1.25 Google Sans, Helvetica Neue, sans-serif;
+  margin-bottom: 24px;
 }

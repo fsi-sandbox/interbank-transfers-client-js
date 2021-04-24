@@ -1,5 +1,5 @@
 let notificationPerm;
-const BACKEND = 'http://localhost:8080';
+const BACKEND = 'https://fundzz.herokuapp.com';
 
 export const initiateTransfer = async (details) => {
   const response = await fetch(`${BACKEND}/inter-bank-transfers`, {

@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-globals */
 /* eslint-disable no-alert */
 /* eslint-disable import/extensions */
-import { setupNotifications, storage, getBankList } from './utils.js';
+import { setupNotifications, storage, getBankList, notify } from './utils.js';
 
 const extractValuePairs = (parent, selector) => [...parent.querySelectorAll(`${selector}`)].map((field) => field.value);
 
@@ -73,6 +73,11 @@ const attemptTransfer = async (event) => {
   const [fromBank, toBank] = extractValuePairs(form, '[data-bankinput]');
   const [fromAccount, toAccount] = extractValuePairs(form, '[data-nubaninput]');
 
+  if (fromAccount === toAccount) {
+    notify('You are attempting to transfer funds between the same account. This is not supported!');
+    return;
+  }
+
   const transactionReview = `
     You are about to initiate a transfer of NGN ${amount}
     from ${fromName} (${fromAccount} - ${fromBank})
@@ -95,10 +100,10 @@ const attemptTransfer = async (event) => {
         }
       ];
 
-      saveTransactingParties(parties);
-      saveTransaction({
-        amount, fromAccount, toAccount, tnxTime, currency: 'NGN'
-      });
+      // saveTransactingParties(parties);
+      // saveTransaction({
+      //   amount, fromAccount, toAccount, tnxTime, currency: 'NGN'
+      // });
     }
   }
 };

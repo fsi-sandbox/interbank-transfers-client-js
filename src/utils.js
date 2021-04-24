@@ -1,7 +1,7 @@
 let notificationPerm;
 const BACKEND = 'http://localhost:8080';
 
-const notify = (message) => {
+export const notify = (message) => {
   // eslint-disable-next-line no-console
   console.log(message);
 
@@ -10,8 +10,6 @@ const notify = (message) => {
   // eslint-disable-next-line no-new
   new Notification('Status', { body: message, icon: './images/feedback.svg' });
 };
-
-export const dummy = () => {};
 
 export const setupNotifications = () => {
   // notify the user about the status of of their funds transfer

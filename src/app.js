@@ -3,13 +3,19 @@
 /* eslint-disable import/extensions */
 
 import {
-  setupNotifications, storage, getBankList, notify,
-  bindInputToDataList, getAccountsList, initiateTransfer
+  setupNotifications,
+  storage,
+  getBankList,
+  notify,
+  bindInputToDataList,
+  getAccountsList,
+  initiateTransfer
 } from './utils.js';
 
 let banksList = [];
 let accountsList = [];
 let transactionsList = [];
+let transferInProgress = false;
 
 const extractValuePairs = (parent, selector) => [...parent.querySelectorAll(`${selector}`)].map((field) => field.value);
 
@@ -46,9 +52,7 @@ const saveTransactingParties = async (parties) => {
 };
 
 const saveTransaction = async (args) => {
-  const {
-    amount, fromAccount, toAccount, tnxTime, tnxRef, currency
-  } = args;
+  const { amount, fromAccount, toAccount, tnxTime, tnxRef, currency } = args;
 
   const tnx = {
     amount,
@@ -81,16 +85,14 @@ const saveTransaction = async (args) => {
 
 const transferDetailsAreValid = (opts) => {
   let status = true;
-  const {
-    fromAccount, toAccount, fromBank, toBank
-  } = opts;
+  const { fromAccount, toAccount, fromBank, toBank } = opts;
 
   if (fromAccount === toAccount) {
     status = false;
     notify('You are attempting to transfer funds between the same account. This is not supported!');
   }
 
-  if (!banksList.find((b) => b.name === fromBank) || !banksList.find((b) => b.name === toBank)) { 
+  if (!banksList.find((b) => b.name === fromBank) || !banksList.find((b) => b.name === toBank)) {
     status = false;
     notify('Pls select from the available list of banks');
   }
@@ -98,18 +100,41 @@ const transferDetailsAreValid = (opts) => {
   return status;
 };
 
+const disableUserInput = ([submitBtn, ...others]) => {
+  requestAnimationFrame(() => {
+    submitBtn.classList.add('busy');
+    submitBtn.setAttribute('disabled', '');
+    [...others].forEach((el) => el.setAttribute('readonly', ''));
+  });
+};
+
+const enableUserInput = ([submitBtn, ...others]) => {
+  requestAnimationFrame(() => {
+    submitBtn.classList.remove('busy');
+    submitBtn.removeAttribute('disabled', '');
+    [...others].forEach((el) => el.removeAttribute('readonly', ''));
+  });
+};
+
 const attemptTransfer = async (event) => {
   event.preventDefault();
   const form = event.target;
+
+  if (transferInProgress) return;
 
   const amount = form.querySelector('[data-moneyinput]').value;
   const [fromName, toName] = extractValuePairs(form, '[data-nameinput]');
   const [fromBank, toBank] = extractValuePairs(form, '[data-bankinput]');
   const [fromAccount, toAccount] = extractValuePairs(form, '[data-nubaninput]');
 
-  if (!transferDetailsAreValid({
-    fromAccount, toAccount, fromBank, toBank
-  })) return;
+  const detailsAreValid = transferDetailsAreValid({
+    fromAccount,
+    toAccount,
+    fromBank,
+    toBank
+  });
+
+  if (!detailsAreValid) return;
 
   const transactionReview = `
     You are about to initiate a transfer of NGN ${amount}
@@ -118,11 +143,18 @@ const attemptTransfer = async (event) => {
   `;
 
   if (confirm(transactionReview)) {
-    const responseData = await initiateTransfer({
-      amount, fromAccount, toAccount, fromName, toName
-    });
+    transferInProgress = true;
+    const allInputs = form.querySelectorAll('input');
+    const submitBtn = form.querySelector('button');
+    disableUserInput([submitBtn, ...allInputs]);
 
-    console.log(responseData);
+    const responseData = await initiateTransfer({
+      amount,
+      fromAccount,
+      toAccount,
+      fromName,
+      toName
+    });
 
     if (responseData && responseData.status === 'OK') {
       const { tnxTime, tnxRef, currency } = responseData;
@@ -141,9 +173,17 @@ const attemptTransfer = async (event) => {
 
       accountsList = await saveTransactingParties(parties);
       transactionsList = await saveTransaction({
-        amount, fromAccount, toAccount, tnxTime, tnxRef, currency
+        amount,
+        fromAccount,
+        toAccount,
+        tnxTime,
+        tnxRef,
+        currency
       });
     }
+
+    enableUserInput(submitBtn, ...allInputs);
+    transferInProgress = false;
   }
 };
 

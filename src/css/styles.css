@@ -106,7 +106,7 @@ section button {
   background-image: url('../images/send.svg');
 }
 
-section button.busy {
+form button.busy {
   background-image: url('../images/busy.svg');
 }
 

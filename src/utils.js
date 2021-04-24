@@ -1,6 +1,20 @@
 let notificationPerm;
 const BACKEND = 'http://localhost:8080';
 
+export const initiateTransfer = async (details) => {
+  const response = await fetch(`${BACKEND}/inter-bank-transfers`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(details)
+  });
+
+  const data = await response.json();
+  return data;
+};
+
 export const notify = (message) => {
   // eslint-disable-next-line no-console
   console.log(message);

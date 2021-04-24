@@ -4,11 +4,12 @@
 
 import {
   setupNotifications, storage, getBankList, notify,
-  bindInputToDataList, getAccountsList
+  bindInputToDataList, getAccountsList, initiateTransfer
 } from './utils.js';
 
 let banksList = [];
 let accountsList = [];
+let transactionsList = [];
 
 const extractValuePairs = (parent, selector) => [...parent.querySelectorAll(`${selector}`)].map((field) => field.value);
 
@@ -46,12 +47,13 @@ const saveTransactingParties = async (parties) => {
 
 const saveTransaction = async (args) => {
   const {
-    amount, fromAccount, toAccount, tnxTime, currency
+    amount, fromAccount, toAccount, tnxTime, tnxRef, currency
   } = args;
 
   const tnx = {
     amount,
     tnxTime,
+    tnxRef,
     currency,
     toAccount,
     fromAccount
@@ -116,8 +118,14 @@ const attemptTransfer = async (event) => {
   `;
 
   if (confirm(transactionReview)) {
-    const { status, tnxTime } = await Promise.resolve({ status: 'Done', tnxTime: Date.now() });
-    if (status && status === 'Done') {
+    const responseData = await initiateTransfer({
+      amount, fromAccount, toAccount, fromName, toName
+    });
+
+    console.log(responseData);
+
+    if (responseData && responseData.status === 'OK') {
+      const { tnxTime, tnxRef, currency } = responseData;
       const parties = [
         {
           name: fromName,
@@ -132,8 +140,8 @@ const attemptTransfer = async (event) => {
       ];
 
       accountsList = await saveTransactingParties(parties);
-      await saveTransaction({
-        amount, fromAccount, toAccount, tnxTime, currency: 'NGN'
+      transactionsList = await saveTransaction({
+        amount, fromAccount, toAccount, tnxTime, tnxRef, currency
       });
     }
   }

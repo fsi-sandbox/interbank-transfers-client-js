@@ -6,10 +6,9 @@ Live Demo: [https://fundzz.netlify.app/](https://fundzz.netlify.app/)
 <br />
 Complete Tutorial: See the lab on [http://codelabs.fsi.ng/](http://codelabs.fsi.ng/)
 
+<img src="src/images/screens/account-selection.png">
 
-<img src="src/images/app-screen.png">
-
-<br /> <br />
+> See more screenshots in [the screens folder](./src/images/screens)
 
 ### To Run/Test It Locally
 

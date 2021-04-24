@@ -39,7 +39,8 @@ const putIntoLocalStorage = async (opts) => {
 
   const existing = await getFromLocalStorage(key);
   if (!existing) {
-    localStorage.setItem(key, JSON.stringify(value));
+    const serialized = JSON.stringify(value);
+    localStorage.setItem(key, serialized);
   }
 };
 

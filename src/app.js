@@ -1,9 +1,39 @@
+/* eslint-disable no-restricted-globals */
+/* eslint-disable no-alert */
 /* eslint-disable import/extensions */
 import { setupNotifications, storage, getBankList } from './utils.js';
 
 const extractValuePairs = (parent, selector) => [...parent.querySelectorAll(`${selector}`)].map((field) => field.value);
 
-const attemptTransfer = (event) => {
+const saveTransactingParties = async (parties) => {
+  let allAccounts = await storage.get('accounts');
+  if (!allAccounts) {
+    allAccounts = [...parties];
+    storage.put({
+      key: 'accounts',
+      value: allAccounts
+    });
+    return;
+  }
+
+  let accountsModified = false;
+  parties.forEach(({ account, name, bank }) => {
+    const found = allAccounts.find((act) => act.account === account);
+    if (!found) {
+      allAccounts.push({ account, name, bank });
+      accountsModified = true;
+    }
+  });
+
+  if (accountsModified === true) {
+    storage.put({
+      key: 'accounts',
+      value: allAccounts
+    });
+  }
+};
+
+const attemptTransfer = async (event) => {
   event.preventDefault();
   const form = event.target;
 
@@ -17,8 +47,25 @@ const attemptTransfer = (event) => {
     from ${fromName} (${fromAccount} - ${fromBank})
     to ${toName} (${toAccount} - ${toBank})
   `;
+
   if (confirm(transactionReview)) {
-    console.log('GO');
+    const { status } = await Promise.resolve({ status: 'Done' });
+    if (status && status === 'Done') {
+      const parties = [
+        {
+          name: fromName,
+          bank: fromBank,
+          account: fromAccount
+        },
+        {
+          name: toName,
+          bank: toBank,
+          account: toAccount
+        }
+      ];
+
+      saveTransactingParties(parties);
+    }
   }
 };
 

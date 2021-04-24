@@ -3,10 +3,12 @@
 /* eslint-disable import/extensions */
 
 import {
-  setupNotifications, storage, getBankList, notify, bindInputToDataList
+  setupNotifications, storage, getBankList, notify,
+  bindInputToDataList, getAccountsList
 } from './utils.js';
 
 let banksList = [];
+let accountsList = [];
 
 const extractValuePairs = (parent, selector) => [...parent.querySelectorAll(`${selector}`)].map((field) => field.value);
 
@@ -14,11 +16,11 @@ const saveTransactingParties = async (parties) => {
   let allAccounts = await storage.get('accounts');
   if (!allAccounts) {
     allAccounts = [...parties];
-    storage.put({
+    await storage.put({
       key: 'accounts',
       value: allAccounts
     });
-    return;
+    return allAccounts;
   }
 
   let accountsModified = false;
@@ -31,11 +33,15 @@ const saveTransactingParties = async (parties) => {
   });
 
   if (accountsModified === true) {
-    storage.put({
+    await storage.put({
       key: 'accounts',
-      value: allAccounts
+      value: allAccounts,
+      overwrite: true
     });
+    return allAccounts;
   }
+
+  return [];
 };
 
 const saveTransaction = async (args) => {
@@ -59,14 +65,16 @@ const saveTransaction = async (args) => {
       key: tnxKey,
       value: allTnxs
     });
-    return;
+    return allTnxs;
   }
 
   allTnxs.push(tnx);
-  storage.put({
+  await storage.put({
     key: tnxKey,
-    value: []
+    value: allTnxs,
+    overwrite: true
   });
+  return allTnxs;
 };
 
 const transferDetailsAreValid = (opts) => {
@@ -123,12 +131,45 @@ const attemptTransfer = async (event) => {
         }
       ];
 
-      // saveTransactingParties(parties);
-      // saveTransaction({
-      //   amount, fromAccount, toAccount, tnxTime, currency: 'NGN'
-      // });
+      accountsList = await saveTransactingParties(parties);
+      await saveTransaction({
+        amount, fromAccount, toAccount, tnxTime, currency: 'NGN'
+      });
     }
   }
+};
+
+const useAllDetailsOnAccountSelection = () => {
+  const accountNumberFields = document.querySelectorAll('[data-nubaninput]');
+  [...accountNumberFields].forEach((f) => {
+    f.addEventListener('change', (event) => {
+      const field = event.target;
+      const found = accountsList.find((item) => item.account === field.value);
+      if (!found) return;
+
+      const { name, bank } = found;
+      const commonParent = field.closest('[data-party]');
+      commonParent.querySelector('[data-nameinput]').value = name;
+      commonParent.querySelector('[data-bankinput]').value = bank;
+    });
+  });
+};
+
+const bankToDatalistOption = (item, option) => {
+  const { name, code } = item;
+  option.setAttribute('value', name);
+  option.setAttribute('data-bankcode', code);
+  return option;
+};
+
+const savedAccountToDatalistOption = (item, option) => {
+  const { name, account, bank } = item;
+  option.setAttribute('value', account);
+  option.setAttribute('data-bank', bank);
+  option.setAttribute('data-name', name);
+  // eslint-disable-next-line no-param-reassign
+  option.textContent = `${name} - ${bank}`;
+  return option;
 };
 
 const startApp = async () => {
@@ -140,16 +181,20 @@ const startApp = async () => {
     listSelector: '#banks',
     entryPoint: getBankList,
     boundInputsSelector: '[data-bankinput]',
-    listItemTransformer: (item, opt) => {
-      const { name, code } = item;
-      opt.setAttribute('value', name);
-      opt.setAttribute('data-bankcode', code);
-      return opt;
-    }
+    listItemTransformer: bankToDatalistOption
   });
-
   banksList = await storage.get('banks');
 
+  await bindInputToDataList({
+    queryKey: 'accounts',
+    listSelector: '#accounts',
+    entryPoint: getAccountsList,
+    boundInputsSelector: '[data-nubaninput]',
+    listItemTransformer: savedAccountToDatalistOption
+  });
+  accountsList = await storage.get('accounts');
+
+  useAllDetailsOnAccountSelection();
   setupNotifications();
 };
 

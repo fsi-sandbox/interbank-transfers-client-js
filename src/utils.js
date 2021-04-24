@@ -50,7 +50,9 @@ export const storage = {
 };
 
 const fetchBanks = async () => {
-  let banks;
+  let banks = await storage.get('banks');
+  if (banks) return banks;
+
   try {
     const response = await fetch(`${BACKEND}/banks`);
     const data = await response.json();
@@ -63,7 +65,7 @@ const fetchBanks = async () => {
 };
 
 export const getBankList = async () => {
-  const banks = (await storage.get('banks')) || (await fetchBanks());
+  const banks = await fetchBanks();
   putIntoLocalStorage({
     key: 'banks',
     value: banks
@@ -72,9 +74,12 @@ export const getBankList = async () => {
   return banks;
 };
 
+export const getAccountsList = async () => storage.get('accounts');
+
 export const bindInputToDataList = async (opts = {}) => {
   const {
-    entryPoint, queryKey, listSelector, boundInputsSelector, listItemTransformer
+    entryPoint, queryKey, listSelector,
+    boundInputsSelector, listItemTransformer
   } = opts;
 
   const data = await (entryPoint() || Promise.resolve());
@@ -86,7 +91,7 @@ export const bindInputToDataList = async (opts = {}) => {
   const boundInputs = document.querySelectorAll(boundInputsSelector);
 
   data.forEach((item) => {
-    const opt = listItemTransformer(item, document.createElement('option'));
+    const opt = listItemTransformer(item, document.createElement('option'), dataList);
     dataList.appendChild(opt);
   });
 
